@@ -1,0 +1,377 @@
+---
+title: "Untitled"
+author: "Viswanth"
+date: "2 January 2018"
+output:
+  word_document: default
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r}
+## Project
+#To Build a Logistic Regression Model to predict default10yr a categorical variable in creditset using the predictors age,income and loan using the creditset.csv
+##Solution:
+
+#In this project We need to predict default10yr using the other predictor variables given in the dataset using Logstic Regression as our #response variable is a categorical variable .We will train our model and then test our model by splitting the  crediset into 2 datasets .
+
+# Importing the dataset
+```
+
+```{r}
+# creditset<-read.csv(file.choose())  OR
+#we can use this to upload/import our creditset csv file from computer too
+creditset<- read.csv("G:/Business Analytics_R_Acad glid/creditset.csv")
+dim(creditset)
+names(creditset)
+```
+
+
+```{r}
+#We can see that  creditset has 2000 observations with 6 variables/columns . We need to predict  response Variable "default10yr" which is categorical variable ,so we have to make a Logistic Regression Model
+```
+
+
+```{r}
+library(caTools)
+# Splitting creditset into training and testing DATASET
+```
+
+
+```{r}
+# Splitting creditset into training and testing DATASET
+```
+
+
+```{r}
+table(creditset$default10yr)
+set.seed(2)
+split<-sample.split(creditset,SplitRatio = 0.75)
+split
+training<-subset(creditset,split=="TRUE")
+dim(training)
+testing<-subset(creditset,split== "FALSE")
+dim(testing)
+names(creditset)
+```
+
+
+```{r}
+####Checking Actual 0's & 1's of default10yr in creditset,trainingset,testing set . O -> Non-defaulter , 1-> defaulter
+```
+
+
+```{r}
+table(creditset$default10yr) #tells us how many defaulters & non defualters are there in the creditset
+table(training$default10yr)   #tells us how many defaulters & non defualters are there in the training set
+table(testing$default10yr)    #tells us how many defaulters & non defualters are there in the testing set
+
+```
+
+
+```{r}
+#we need to predict default10yr from the data given.As default10yr is a categorial 1 being defaulter 0 being non -defaulter.We need to use logistic regression for predicting our dependent variable default10yr.In above we have divided our data set into 2 parts  training and testing. We are going to build our model /train our model with training dataset and will test the same model on our testing dataset. training & testing are the subsets of creditset.For building our  Logistic Regression model clientid  and LTI are not the predictors of default10yr we will not use these variables while building our model . Our predictor variables are age,income and loan .We need to decide and optimize our model in such a way that the accuracy is more and the threshold cutoff probability is such that the model is not dangerous like we predict defaulters as non-defaulters as such an info will be dangerous for bank meaning  False-Negative should be minimum but  not much accuracy of the model is lost
+
+```
+
+
+```{r}
+#Building Logistic Regression Model
+
+```
+
+
+```{r}
+model<-glm(default10yr~income+age+loan,data=training,family= binomial) 
+model
+```
+
+
+```{r}
+#Hence our logit function predictors are as below
+
+    # Constant term  is 9.8166458
+    #Coefficient for  Income is  -0.0002367 
+    #  Coefficient for  age  is  -0.3465840
+    #  Coefficient for  loan is  0.0017076
+# Our Logit function becomes  
+
+    # logit(odds) = logit(default10yr) =  9.8166458 + ((-0.0002367) * Income) + ((-0.3465840) * age) + ((0.0017076) *loan)
+    
+    # p(default10yr) = e^(9.8166458 + ((-0.0002367) * Income) + ((-0.3465840) * age) + ((0.0017076) *loan)) / ( 1+ e^(9.8166458 + ((-0.0002367) * Income) + ((-0.3465840) * age) + ((0.0017076) *loan))
+```
+
+
+```{r}
+#Optimizing Our Model
+# Building others models trying to optimize "model" by trying combinations of predictors
+
+model1<-glm(default10yr~income,data=training,family= binomial)
+summary(model1)
+model2<-glm(default10yr~age,data=training,family= binomial)
+summary(model2)
+model3<-glm(default10yr~loan,data=training,family= binomial)
+summary(model3)
+model4<-glm(default10yr~age+income,data=training,family= binomial)
+summary(model4)
+model5<-glm(default10yr~age+loan,data=training,family= binomial)
+summary(model5)
+model6<-glm(default10yr~income+loan,data=training,family= binomial)
+summary(model6)
+
+
+
+```
+
+```{r}
+
+# In all the above models from model1 to model6 the AIC value has not decreased hence we cannot remove any of the predictors from Logistic Regression model named "model" . So we can say all the three predictors age,income & loan are good predictors of default10yr.  Our Final model for predicting default10yr is model which is optimized.
+```
+
+
+```{r}
+#Predicting Probabilities for training dataset
+
+```
+
+
+
+```{r}
+# now we will find the predicted probabilties associated with our model for training dataset
+library(CARS)
+res<-predict(model,training,type="response")
+head(res,n=5)
+# Confusion Matrix for our results when compared with predicted values for training dataset
+# we have threshold prob of 0.5 in this case which is taken by default
+
+```
+
+
+```{r}
+tabtraining0.5<-table(ActualValue=training$default10yr,PredictedValue=res>=0.5) #checked with probability cutoff = 0.5
+tabtraining0.5
+accuracytraining0.5<-sum(diag(tabtraining0.5)/sum(tabtraining0.5))
+accuracytraining0.5
+```
+
+
+```{r}
+#our model built is accurate to upto 95%  meaning it predicted defaulter as defaulter & non-defaulter as non-defaulter in the training dataset from creditset with almost 95% accuracy
+# Predicting Probabilties for testing dataset
+```
+
+```{r}
+# now checking our model for accuracy with testing dataset
+# Finding the predicted probabilties associated with observations using our model for testing dataset
+res1<-predict(model,testing,type="response")
+head(res1)
+# Confusion Matrix for our results when compared with predicted values for testing dataset
+tabtesting0.5<-table(ActualValue=testing$default10yr,PredictedValue=res1>=0.5) #with probability cutoff= 0.5
+tabtesting0.5
+accuracytesting0.5<-sum(diag(tabtesting0.5)/sum(tabtesting0.5))
+accuracytesting0.5 #accuracy at 0.5 cutoff prob
+```
+
+
+```{r}
+#our model built is accurate to upto 95%  meaning after verifying ith testing dataset from creditset.As it predicted & we verified defaulter as defaulter & non-defaulter as non-defaulter in the testing dataset from creditset with almost 95% accuracy 
+    
+# ROC curve    
+```
+
+```{r}
+# now we will try to check using ROCR package whether our cutoff Probability is with less False-Negative or not .
+# We can also check using ROC Curve whether our cutoff probablity is most closest to NW corner of the graph or not meaning it has least distance with NW corner of graph .
+
+library(ROCR)
+ROCRPred<-prediction(res,training$default10yr)
+ROCRPref<-performance(ROCRPred,"tpr","fpr")
+plot(ROCRPref,colorize=TRUE,main="ROC Curve",print.cutoffs.at=seq(0.1,by=0.1))
+abline(a=0,b=1)
+```
+
+```{r}
+# We can see that  the distance between the 0.4 probabilty and the Northwest corner is  less as compared to  0.5
+# so we can decide to take our cutoff probabilty as 0.4
+# this probability will also decrese number of false-Negatives which were dangerous to our model
+```
+
+
+
+```{r}
+#### Trying different Probabilty values as cutoff to check diffrent Confusion matrices
+# checking confusion Matrix for diffrent Probabilities for our training dataset
+table(ActualValue=training$default10yr,PredictedValue=res>=0.3) #checked with probability cutoff = 0.3
+table(ActualValue=training$default10yr,PredictedValue=res>=0.4) #checked with probability cutoff = 0.4
+table(ActualValue=training$default10yr,PredictedValue=res>=0.5) #checked with probability cutoff = 0.5
+
+```
+
+
+```{r}
+# so finally As per the model our probability cutoff is  0.4 as it gives me a good accuracy along with less false negatives 
+# Thus giving the Confusion matrix as 
+
+tabtraining0.4<-table(ActualValue=training$default10yr,PredictedValue=res>=0.4) #checked with probability cutoff = 0.4
+tabtraining0.4
+
+```
+
+
+
+```{r}
+# checking actual 0's & 1's in training dataset
+table(training$default10yr)
+
+accuracytraining0.4<-sum(diag(tabtraining0.4))/sum(tabtraining0.4)
+accuracytraining0.4
+```
+
+
+```{r}
+#Sensitivity & Specificity & Accuracy for training dataset
+```
+
+
+```{r}
+#calculating Sensitivity & Specificity for dataset training for  p=0.4
+sensitivitytraining0.4<-tabtraining0.4[4]/(tabtraining0.4[2]+tabtraining0.4[4])
+sensitivitytraining0.4
+
+specificitytraining0.4<-tabtraining0.4[1]/(tabtraining0.4[1] + tabtraining0.4[3])
+specificitytraining0.4
+
+```
+
+
+```{r}
+# Classification Accuracy for group 0 for training dataset is equal to  "specificitytraining0.4" calculated as shown in output
+
+# Classification Accuracy for group 1 is equal to  calculated as "sensitivitytraining0.4" shown in  output
+
+# Classification Accuracy of our model for training dataset is given by  equal to
+classification_accuracy_training0.4<- (sensitivitytraining0.4+specificitytraining0.4)/2
+classification_accuracy_training0.4
+```
+
+
+```{r}
+#Overall accuracy  found by using the table meaning true predictions out of actuals is given by
+# (TruePositive + TrueNegative ) / (TP+TN+FP+FN)
+accuracy_tabtraining0.4<-sum(diag(tabtraining0.4))/sum(tabtraining0.4)
+accuracy_tabtraining0.4
+```
+
+
+```{r}
+#Verifying our Model on Testing dataset
+```
+
+
+```{r}
+# checking actual 0's & 1's in testing dataset
+table(testing$default10yr)
+
+```
+
+
+```{r}
+# We have below Confusion matrix as for testing 
+tabtesting0.4<-table(ActualValue=testing$default10yr,PredictedValue=res1>=0.4) #checked with probability cutoff = 0.4
+tabtesting0.4
+```
+
+```{r}
+## Verifying our Model with Probability 0.4 for the testing dataset
+```
+
+
+
+```{r}
+# Verifying our Model with Probability 0.4 for the testing dataset
+
+#calculating Sensitivity & Specificity for dataset testing for  p=0.4
+sensitivitytesting0.4<-tabtesting0.4[4]/(tabtesting0.4[2]+tabtesting0.4[4])
+sensitivitytesting0.4
+specificitytesting0.4<-tabtesting0.4[1]/(tabtesting0.4[1] + tabtesting0.4[3])
+specificitytesting0.4
+```
+
+
+```{r}
+# Classification Accuracy for group 0 for testing dataset is equal to  "specificitytesting0.4" calculated as shown in output
+
+# Classification Accuracy for group 1 is equal to  calculated as "sensitivitytesting0.4" shown in  output
+
+# Classification Accuracy of our model for testing dataset is given by  equal to
+classification_accuracy_testing0.4<- (sensitivitytesting0.4+specificitytesting0.4)/2
+classification_accuracy_testing0.4
+```
+
+
+```{r}
+#Overall accuracy  found by using the table,meaning true total predictions out of total actuals is given by
+# (TruePositive + TrueNegative ) / (TP+TN+FP+FN)
+accuracy_tabtesting0.4<-sum(diag(tabtesting0.4))/sum(tabtesting0.4)
+accuracy_tabtesting0.4
+```
+
+
+```{r}
+#Our Logistic Regression model "model" is a good model which is able to predict  the data which was even not supplied to it i.e. testing dataset. As model was trained with training dataset. We get good  Overall Accuracy and also model is less risky .
+```
+
+```{r}
+# Calculating Area under ROC curve
+# install.packages("verification")
+library(verification)
+roc.area(training$default10yr,res)
+# Area unde ROC curve is equal to as shown below
+```
+
+
+```{r}
+# Calculating Nagelkerke R square
+# install.packages("fmsb")
+library(fmsb)
+NagelkerkeR2(model)
+```
+
+
+```{r}
+# our Nagelkerke R square is calculated as shownabove .
+```
+
+
+```{r}
+logLik(model)
+```
+
+```{r}
+# The probability of the observed results given the parameter estimates is known as the Likelihood. Since the likelihood is a small number less than 1, it is customary to use -2 times the log likelihood (-2LL) as an estimate of how well the model fits the data. A good model is one that results in a high likelihood of the observed results. This translates into a small value for -2LL (if a model fits perfectly, the likelihood=1 and -2LL=0)
+
+#This is far from zero, however because there is no upper boundary for -2LL it is difficult to make a statement about the meaning of the score. 
+ # It is more often used to see whether adding additional variables to the model leads to a significant reduction in the -2LL.
+```
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
